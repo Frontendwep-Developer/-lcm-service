@@ -1,12 +1,14 @@
 // Express kutubxonasini chaqirib olamiz
 const express = require('express');
 const app = express();
-// Server porti. Deploymentda bu o'zgarishi mumkin (masalan, process.env.PORT)
-const PORT = 3000;
+// Render kabi hosting platformalari uchun PORTni avtomatik olish
+const PORT = process.env.PORT || 3000;
 
 // --- Matematik Funksiyalar ---
 
-// Eng Katta Umumiy Bo'luvchini (EKUB) topish
+/**
+ * Eng Katta Umumiy Bo'luvchini (EKUB) Evklid algoritmi yordamida topadi.
+ */
 function gcd(a, b) {
     while (b) {
         [a, b] = [b, a % b];
@@ -14,15 +16,19 @@ function gcd(a, b) {
     return a;
 }
 
-// Eng Kichik Umumiy Karralini (EKUK) topish
-// EKUK(x, y) = (x * y) / EKUB(x, y)
+/**
+ * Eng Kichik Umumiy Karralini (EKUK) topadi.
+ * EKUK(x, y) = (x * y) / EKUB(x, y)
+ */
 function lcm(x, y) {
+    // EKUK uchun eng yuqori aniqlikni ta'minlash uchun Math.abs() ishlatiladi,
+    // ammo bizning tekshiruvimiz manfiy sonlarni avvaldan bloklaydi.
     return (x * y) / gcd(x, y);
 }
 
 // --- Veb Metod (GET so'rovini qabul qiluvchi qism) ---
 
-// VAZIFA TALABIGA MOSLASHTIRILGAN YANGI ROUTE
+// VAZIFA TALABIGA MOSLASHTIRILGAN Yagona ROUTE
 app.get('/xolmominovdilshodbek4_gmail_com', (req, res) => {
     // Javob formatini faqat matn qilib belgilaymiz
     res.setHeader('Content-Type', 'text/plain');
@@ -30,26 +36,35 @@ app.get('/xolmominovdilshodbek4_gmail_com', (req, res) => {
     const x_str = req.query.x;
     const y_str = req.query.y;
 
+    // 1. Kiritilgan qiymatlar mavjudligini tekshirish
+    if (x_str === undefined || y_str === undefined) {
+        // Agar ?x=... yoki ?y=... so'rovlari umuman bo'lmasa, NaN qaytaramiz (ehtiyot sharti)
+        return res.send("NaN");
+    }
+
     // Qiymatlarni butun songa (Integer) aylantiramiz
     const x = parseInt(x_str, 10);
     const y = parseInt(y_str, 10);
 
     // --- Talab Qilingan Tekshiruvlar ---
 
-    // 1. NaN tekshiruvi: Agar son bo'lmasa, bo'sh, manfiy yoki nol bo'lsa (natural son emas)
+    // 2. NaN tekshiruvi: Agar haqiqiy son bo'lmasa
+    // 3. Natural son (x > 0 va y > 0) tekshiruvi
     if (isNaN(x) || isNaN(y) || x <= 0 || y <= 0) {
         return res.send("NaN");
     }
 
-    // 2. Kiritmada raqamdan boshqa belgi borligini tekshirish (masalan: '10a' yoki '5.5')
+    // 4. Kasr son yoki raqam bo'lmagan belgilar tekshiruvi (eng muhim tekshiruv)
+    // Bu '5.5' kabi kasrlar (parseInt 5 ga aylantiradi, lekin String(x) 5.5 ga teng emas)
+    // va '10a' kabi harf aralashgan qiymatlarni bloklaydi.
     if (String(x) !== x_str || String(y) !== y_str) {
         return res.send("NaN");
     }
 
-    // 3. EKUKni hisoblash
+    // 5. EKUKni hisoblash
     const result = lcm(x, y);
 
-    // 4. Natijani oddiy string (faqat raqamlar) shaklida qaytarish
+    // 6. Natijani oddiy string (faqat raqamlar) shaklida qaytarish
     return res.send(String(result));
 });
 
